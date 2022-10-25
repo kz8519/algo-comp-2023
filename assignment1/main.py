@@ -5,6 +5,8 @@ import os
 
 INPUT_FILE = 'testdata.json' # Constant variables are usually in ALL CAPS
 
+response_freqs = {}
+
 class User:
     def __init__(self, name, gender, preferences, grad_year, responses):
         self.name = name
@@ -16,8 +18,19 @@ class User:
 
 # Takes in two user objects and outputs a float denoting compatibility
 def compute_score(user1, user2):
-    # YOUR CODE HERE
-    return 0
+
+    # if gender preferences don't match, return 0
+    if (user1.gender not in user2.preferences) or (user2.gender not in user1.preferences):
+        return 0
+
+    # compute percentage of matching responses
+    num_questions = 20
+    score = 0
+    for i in range(num_questions):
+        if user1.responses[i] == user2.responses[i]:
+            # more common answers weighted less
+            score += 1 / response_freqs[user1.responses[i]]
+    return score / num_questions
 
 
 if __name__ == '__main__':
@@ -35,6 +48,13 @@ if __name__ == '__main__':
                             user_obj['responses'])
             users.append(new_user)
 
+    for user in users:
+        for response in user.responses:
+            if response in response_freqs:
+                response_freqs[response] += 1
+            else:
+                response_freqs[response] = 1
+    
     for i in range(len(users)-1):
         for j in range(i+1, len(users)):
             user1 = users[i]
