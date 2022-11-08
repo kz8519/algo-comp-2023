@@ -21,7 +21,76 @@ def run_matching(scores: List[List], gender_id: List, gender_pref: List) -> List
             - What data structure can you use to take advantage of this fact when forming your matches?
         - This is by no means an exhaustive list, feel free to reach out to us for more help!
     """
-    matches = [()]
+    matches = []
+
+    N = len(gender_id)
+    n = N // 2
+    unprocessed_rankings = []
+    matched = [None] * N
+
+    preferences_dict = {
+        "Women": ["Female"],
+        "Men": ["Male"],
+        "Bisexual": ["Female", "Male"]
+    }
+
+    # update scores to account for gender preferences
+    for i in range(N):
+        for j in range(N):
+            if i != j:
+                if (gender_id[i] not in preferences_dict[gender_pref[j]]) or (gender_id[j] not in preferences_dict[gender_pref[i]]):
+                    scores[i][j] = 0
+    
+    # get rankings for each person
+    for i in range(N):
+        unprocessed_rankings.append(np.argsort(-np.array(scores[i])))
+
+    # process rankings
+    rankings = []
+    for row in unprocessed_rankings:
+        new_row = []
+        for elt in row:
+            if elt >= n:
+                new_row.append(elt)
+        rankings.append(new_row)
+    
+    # let the first half of people be proposers and the second half be receivers
+    unmatched_proposers = n
+    
+    # while some proposer is free and hasn't proposed to every receiver
+    while unmatched_proposers > 0:
+       
+        # choose such a proposer
+        proposer = 0
+        while proposer < n and matched[proposer] != None:
+            proposer += 1
+        
+        # iterate through receivers on their list
+        ind = 0
+        while ind < N and matched[proposer] == None:
+            receiver = rankings[proposer][ind]
+
+            # if free, match them
+            if matched[receiver] == None:
+                matched[receiver] = proposer
+                matched[proposer] = receiver
+                unmatched_proposers -= 1
+            
+            else:
+                # if receiver prefers this proposer, match them
+                prev_proposer = matched[receiver]
+                if rankings[receiver][proposer] > rankings[receiver][prev_proposer]:
+                    matched[receiver] = proposer
+                    matched[proposer] = receiver
+                    matched[prev_proposer] = None
+
+            # otherwise, rejected
+            ind += 1
+
+    # update list of matches
+    for i in range(n):
+        matches.append((i, matched[i]))
+
     return matches
 
 if __name__ == "__main__":
